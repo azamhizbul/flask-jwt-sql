@@ -5,8 +5,6 @@ from sqlite3 import Error
 from security import authenticate, identity
 from connectionDB import connect
 
-# jwt = JWT(app, authenticate, identity)
-
 conn = connect()
 
 def callLast():
@@ -19,16 +17,21 @@ def callLast():
         
 
 class Account(Resource):
-    @jwt_required
+    # @jwt_required()
     def get(self):
+        data = []
         with connect():
             cur = connect().cursor()
             query = "select * from user"
             result = cur.execute(query)
             rows = result.fetchall()
-            return {"data" : rows }, 200
+            for i in rows:
+                data.append({"id" : i[0], "username": i[1]}) 
+                
+            
+            return {"data" : data }, 200
 
-    
+    @jwt_required()
     def post(self):
         message = None
         conn = connect()
@@ -48,7 +51,7 @@ class Account(Resource):
             conn.close()    
         return {"message" : message}
 
-    @jwt_required
+    @jwt_required()
     def put(self):
         message = None
         conn = connect()
@@ -67,7 +70,7 @@ class Account(Resource):
             conn.close()    
         return {"message" : message}    
 
-    @jwt_required
+    @jwt_required()
     def delete(self):
         message = None
         conn = connect()
