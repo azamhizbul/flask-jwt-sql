@@ -1,8 +1,8 @@
-from flask import Flask, request
-from flask_restful import Resource, Api, reqparse
+from flask import request
+from flask_restful import Resource
 from flask_jwt_extended import jwt_required
 from sqlite3 import Error
-from security import authenticate, identity
+import bcrypt
 from connectionDB import connect
 
 conn = connect()
@@ -14,10 +14,15 @@ def callLast():
         result = cur.execute(query)
         row = result.fetchone()
         return row
-        
+
+def crypto(param):
+    param = param.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(param, salt)     
+    return hashed   
 
 class Account(Resource):
-    # @jwt_required()
+    @jwt_required()
     def get(self):
         data = []
         with connect():
@@ -27,20 +32,19 @@ class Account(Resource):
             rows = result.fetchall()
             for i in rows:
                 data.append({"id" : i[0], "username": i[1]}) 
-                
-            
             return {"data" : data }, 200
 
     @jwt_required()
     def post(self):
         message = None
         conn = connect()
+         
         try:
             currentId = callLast()[0]
             data = request.get_json()
             cur = conn.cursor()
             query = "INSERT INTO 'user' (id,username,password) VALUES (?,?,?)"
-            cur.execute(query, (currentId+1, data['username'], data['password']))
+            cur.execute(query, (currentId+1, data['username'], crypto(data['password'])))
             conn.commit()
             message = "data berhasil ditambahkan"
         except Error as e :
