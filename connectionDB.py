@@ -9,4 +9,3 @@ def connect():
     except Error as e :
         print(e)
     return conn
-           
